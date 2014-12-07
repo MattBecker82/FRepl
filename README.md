@@ -22,7 +22,7 @@ I haven't tested it, but opening FRepl.sln and choosing Build->Build Solution wi
 ### Building with Microsoft build tools outwith Visual Studio
 Your best bet is to run MSBuild.exe directly on FRepl.sln. You will need F# Development tools (fsc.exe etc.) installed.
 
-### Building on other platforms.
+### Building on other platforms
 There's nothing particularly platform-specific about the FRepl library, other than its use of .NET. Therefore it's probably possible for someone who knows what they're doing to build and run it on other platforms which support .NET (e.g. Linux/Mono). Best of luck - let me know how you get on!
 
 ## Getting started
@@ -48,7 +48,9 @@ At the heart of a REPL is an *evaluation function*. This is simply the function 
 
 In FRepl, an evaluation function has the type `EvalFunc<'TState>` where `'TState` is the REPL's state type:
 
+```F#
     type EvalFunc<'TState> = 'TState -> string -> 'TState * string * bool
+```
 
 An evaluation function is a (curried) function which takes as input:
 
@@ -63,17 +65,21 @@ It returns a 3-element tuple consisting of:
 
 The following is an example of a trivial evaluation function:
 
+```F#
     let trivialEvalFunc state input = (state, "Bonjour, monde!", true)
+```
     
 This evaluation function simply ignores the input text, returns the state unaltered, and the output text `"Bonjour, monde!"`, and indicates that the REPL should exit.
 
 A slightly more interesting evaluation function is given in SimpleRepl.fs:
 
+```F#
     let simpleEvalFunc state input =
         let output = sprintf "You typed: %s" input
         let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
                 || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
         (state,output,exit)
+```
 
 This evaluation function plays back the input text to the user, returns the state unaltered, and indicates the REPL should exit if the input text was `"quit"` or `"exit"`.
 
@@ -81,18 +87,24 @@ This evaluation function plays back the input text to the user, returns the stat
 
 A REPL usually displays a short piece of text (the *prompt*) to the user before retrieving the input text. Since the prompt may depend on the REPL's state, FRepl represents a prompt as a function which takes the state as input, and returns the prompt text:
 
+```F#
     type Prompt<'TState> = 'TState -> string
+```
 
 A simple prompt might always return the same prompt text, regardless of the state:
 
+```F#
     let helloPrompt state = "Hello> "
+```
 
 ### Running a REPL
 
 The simplest way to run a REPL in FRepl is to use the `stdRepl` function, which uses the System Console to display output to and read input from the user:
 
+```F#
     val stdRepl : EvalFunc<'TState> -> Prompt<'TState> -> 'TState -> 'TState
-    
+```
+
 The `stdRepl` function takes as input:
 
 1. the evaluation function,
@@ -101,58 +113,83 @@ The `stdRepl` function takes as input:
 
 It returns the final state of the REPL upon exit.
 
-For example, the following will run a REPL using the evaluation function `simpleEvalFunc` and prompt `helloPrompt` defined above. The initial state is `()`, so the state is of type `unit` representing a stateless REPL:
+For example, the following will run a REPL using the evaluation function `simpleEvalFunc` and prompt `helloPrompt` defined above. The initial state is `()`, so the state is of type `unit`, representing a stateless REPL:
 
+```F#
     do stdRepl simpleEvalFunc helloPrompt ()
+```
 
-See the example project **SimpleFunc** for a complete example.
+See the example project **SimpleRepl** for a complete example. The following shows an example session of the **SimpleRepl** application:
+
+```
+    Type 'exit' or 'quit' to exit
+
+    Hello> Hello
+    You typed: Hello
+
+    Hello> Bonjour
+    You typed: Bonjour
+
+    Hello> Bore da
+    You typed: Bore da
+
+    Hello> quit
+    You typed: quit
+    Bye!!
+```
 
 ### A Stateful REPL
 
-The example project **CoutingRepl** shows an example of a REPL with state. In this example, the state is the list of input string typed by the user. It is represented by a value of type `string list`, with the most recent input at the head of the list.
+The example project **CountingRepl** shows an example of a REPL with state. In this example, the state is the list of inputs typed by the user since the REPL was started. It is represented by a value of type `string list`, with the most recent input at the head of the list.
 
 The evaluation function `countingEvalFunc` updates the state by adding the user input to the head of the list. It outputs the most recent three input lines (or up to most recent three), and exits if the input is `"quit"` or `"exit"`:
 
+```F#
     let countingEvalFunc state input =
         let newState = input :: state // Prepend input text to state
         let output = newState |> Seq.truncate 3 |> String.concat "\n" // Ouput the last three inputs
         let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
                 || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
         (newState,output,exit)
-
+```
 
 The prompt function `countingPrompt` displays the number of inputs so far as part of the prompt:
 
+```F#
     let countingPrompt (state : string list) = sprintf "%i> " state.Length
+```
     
 The REPL is run using the `stdRepl` function. The initial state is the empty list `[]`, meaning that initially no inputs have been received.
 
+```F#
     let finalState = stdRepl countingEvalFunc countingPrompt []
+```
     
 Note that the `stdRepl` function returns the final state of the REPL when it exits. This is then stored as the value `finalState` so that it can be accessed by the rest of the program. 
 
 The following shows an example session of the **CountingRepl** application:
+
     Type 'exit' or 'quit' to exit
 
-    0> to be
-    to be
+    0> hello
+    hello
 
-    1> or
-    or
-    to be
+    1> bonjour
+    bonjour
+    hello
 
-    2> not
-    not
-    or
-    to be
+    2> a bear
+    a bear
+    bonjour
+    hello
 
-    3> to be
-    to be
-    not
-    or
+    3> pursued by
+    pursued by
+    a bear
+    bonjour
 
     4> exit
     exit
-    to be
-    not
+    pursued by
+    a bear
     Total lines input: 5
