@@ -19,6 +19,6 @@ let main argv =
     // Run REPL using standard input/output
     let finalState = stdRepl countingEvalFunc countingPrompt []
 
-    Console.WriteLine("Total lines input: %i", finalState.Length)
+    Console.WriteLine("Total lines input: {0}", finalState.Length)
     
     0 // return exit code

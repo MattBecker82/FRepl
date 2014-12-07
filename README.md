@@ -92,7 +92,7 @@ A simple prompt might always return the same prompt text, regardless of the stat
 The simplest way to run a REPL in FRepl is to use the `stdRepl` function, which uses the System Console to display output to and read input from the user:
 
     val stdRepl : EvalFunc<'TState> -> Prompt<'TState> -> 'TState -> 'TState
-	
+    
 The `stdRepl` function takes as input:
 
 1. the evaluation function,
@@ -106,3 +106,53 @@ For example, the following will run a REPL using the evaluation function `simple
     do stdRepl simpleEvalFunc helloPrompt ()
 
 See the example project **SimpleFunc** for a complete example.
+
+### A Stateful REPL
+
+The example project **CoutingRepl** shows an example of a REPL with state. In this example, the state is the list of input string typed by the user. It is represented by a value of type `string list`, with the most recent input at the head of the list.
+
+The evaluation function `countingEvalFunc` updates the state by adding the user input to the head of the list. It outputs the most recent three input lines (or up to most recent three), and exits if the input is `"quit"` or `"exit"`:
+
+    let countingEvalFunc state input =
+        let newState = input :: state // Prepend input text to state
+        let output = newState |> Seq.truncate 3 |> String.concat "\n" // Ouput the last three inputs
+        let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
+                || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
+        (newState,output,exit)
+
+
+The prompt function `countingPrompt` displays the number of inputs so far as part of the prompt:
+
+    let countingPrompt (state : string list) = sprintf "%i> " state.Length
+    
+The REPL is run using the `stdRepl` function. The initial state is the empty list `[]`, meaning that initially no inputs have been received.
+
+    let finalState = stdRepl countingEvalFunc countingPrompt []
+    
+Note that the `stdRepl` function returns the final state of the REPL when it exits. This is then stored as the value `finalState` so that it can be accessed by the rest of the program. 
+
+The following shows an example session of the **CountingRepl** application:
+    Type 'exit' or 'quit' to exit
+
+    0> to be
+    to be
+
+    1> or
+    or
+    to be
+
+    2> not
+    not
+    or
+    to be
+
+    3> to be
+    to be
+    not
+    or
+
+    4> exit
+    exit
+    to be
+    not
+    Total lines input: 5
