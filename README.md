@@ -8,7 +8,7 @@ FRepl is an F# (.NET) library providing REPL (Read-Evaluate-Print-Loop) function
 
 FRepl allows you to incorporate a REPL into your application in a purely functional manner. You supply the evaluation function, and optionally the means to read input / display output. The library runs the REPL for you. 
 
-*Please note.* FRepl is a work in progress, and nowhere near feature complete. You are welcome to play and send me constructive comments, but please bear this in mind. I take all responsibility for any positive consequences, and waive all responsibility for any negative consequences!
+**Please note.** FRepl is a work in progress, and nowhere near feature complete. You are welcome to play and send me constructive comments, but please bear this in mind. I take all responsibility for any positive consequences, and waive all responsibility for any negative consequences!
 
 ## Building FRepl
 
