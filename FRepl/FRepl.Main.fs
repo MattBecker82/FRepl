@@ -5,10 +5,10 @@ open FRepl.Types
 
 /// <summary>Run a REPL</summary>
 /// <param name="evalFunc">The evaluation function to perform on each iteration of the REPL</param>
-/// <param name="prompt">The function to retrive the repl prompt</param>
+/// <param name="prompt">The function to retrive the REPL prompt</param>
 /// <param name="getInput">The function to get the input</param>
 /// <param name="showOutput">The function to show the output</param>
-/// <param name="initState">The initial state of the repl</param>
+/// <param name="initState">The initial state of the REPL</param>
 /// <returns>The final state of the REPL</param>
 let rec repl
     (evalFunc : EvalFunc<'TState>)
@@ -25,10 +25,10 @@ let rec repl
     else
         repl evalFunc prompt getInput showOutput newState
 
-/// <summary>Run a REPL using standard input/output</summary>
-/// <param name="evalFunc">The evaluation function to perform on each iteration of the repl</param>
-/// <param name="prompt">The function to retrive the repl prompt</param>
-/// <param name="initState">The initial state of the repl</param>
+/// <summary>Run a REPL using the console</summary>
+/// <param name="evalFunc">The evaluation function to perform on each iteration of the REPL</param>
+/// <param name="prompt">The function to retrive the REPL prompt</param>
+/// <param name="initState">The initial state of the REPL</param>
 /// <returns>The final state of the REPL</param>
 let stdRepl
     (evalFunc : EvalFunc<'TState>) 
