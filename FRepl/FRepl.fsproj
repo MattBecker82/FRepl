@@ -41,6 +41,8 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FRepl.State.fs" />
+    <Compile Include="FRepl.IO.fs" />
     <Compile Include="FRepl.Types.fs" />
     <Compile Include="FRepl.Common.fs" />
     <Compile Include="FRepl.Main.fs" />

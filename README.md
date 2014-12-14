@@ -29,7 +29,7 @@ There's nothing particularly platform-specific about the FRepl library, other th
 
 FRepl requires .NET 4.5, so make sure it is installed. Reference the FRepl.dll assembly from your project. Use `open FRepl` within an F# file to make the FRepl symbols easily accessible from your code.
 
-### Concepts
+### REPLs
 
 A REPL (Read-Evaluate-Print-Loop) is essentially a program (or sub-program) which does repeatedly does the following:
 
@@ -40,83 +40,46 @@ A REPL (Read-Evaluate-Print-Loop) is essentially a program (or sub-program) whic
 
 The above steps repeat until some exit criterion is met (e.g. the user typed 'exit'), at which point the REPL comes to an end.
 
-The REPL may also be *stateful*. That is, it has a *state* which is initially set to some value, and may be updated as the REPL proceeds. In FRepl the state of the REPL may be represented by any type (the REPL's *state type*). To build an essentially stateless REPL, use the `unit` type for the state.
+The REPL may also be *stateful*. That is, it has a *state* which is initially set to some value, and may be updated as the REPL proceeds. In FRepl the state of the REPL may be represented by any type (the REPL's *state type*). To build a stateless REPL, the `unit` type should be used as the state type, either implicitly or explicitly.
 
-### Evaluation Functions
+### A Simple, Stateless REPL
 
-At the heart of a REPL is an *evaluation function*. This is simply the function which transforms the input text into the output text. It may also depend on, and update the state of the REPL. The evaluation function also indicates when the REPL should exit.
+Let's define simple, statless REPL. That is, a REPL which does not maintain any state. To define a REPL using FRepl we must define a function (the *evaluation function*) which transforms input into output. The evaluation function must also indicate whether the REPL is to exit or not.
 
-In FRepl, an evaluation function has the type `EvalFunc<'TState>` where `'TState` is the REPL's state type:
-
-```F#
-    type EvalFunc<'TState> = 'TState -> string -> 'TState * string * bool
-```
-
-An evaluation function is a (curried) function which takes as input:
-
-1. the current REPL state, and
-2. the input text.
-
-It returns a 3-element tuple consisting of:
-
-1. the (possibly) updated state,
-2. the output text, and
-3. a flag which indicates whether the REPL should exit. A value of true for this flag indicates that the REPL should exit.
-
-The following is an example of a trivial evaluation function:
+The following evaluation function is defined in SimpleRepl.fs:
 
 ```F#
-    let trivialEvalFunc state input = (state, "Bonjour, monde!", true)
-```
-    
-This evaluation function simply ignores the input text, returns the state unaltered, and the output text `"Bonjour, monde!"`, and indicates that the REPL should exit.
-
-A slightly more interesting evaluation function is given in SimpleRepl.fs:
-
-```F#
-    let simpleEvalFunc state input =
+    // Define a simple evaluation function
+    let simpleEvalFunc input =
         let output = sprintf "You typed: %s" input
         let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
                 || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
-        (state,output,exit)
+        (output,exit)
 ```
 
-This evaluation function plays back the input text to the user, returns the state unaltered, and indicates the REPL should exit if the input text was `"quit"` or `"exit"`.
+The return type of `simpleEvalFunc` is `string*bool`, i.e. a pair of a `string` and a `bool`. The first element of the pair is the output to display, and the second element indicates if the REPL should exit. It is set to `true` if the REPL should exit and `false` if it should continue.
 
-### Prompts
+The function `simpleEvalFunc` is defined so that the output consists of the input preceded by the string `"You typed: "`. The return value indicates that the REPL should exit if the input string was `"quit"` or `"exit"`.
 
-A REPL usually displays a short piece of text (the *prompt*) to the user before retrieving the input text. Since the prompt may depend on the REPL's state, FRepl represents a prompt as a function which takes the state as input, and returns the prompt text:
+As well as defining an evaluation function, we must also define a *prompt* to be displayed to the user in order to get their input. For example:
 
 ```F#
-    type Prompt<'TState> = 'TState -> string
+    // Define a simple prompt
+    let helloPrompt = "Hello> "
 ```
 
-A simple prompt might always return the same prompt text, regardless of the state:
+Having defined an evaluation function and a prompt, we can now combine them to form a REPL. Since we want the REPL to be stateless, we use the `statelessRepl` function:
 
 ```F#
-    let helloPrompt state = "Hello> "
+    // Combine the evaluation function and the prompt into a stateless REPL
+    let simpleRepl = statelessRepl simpleEvalFunc helloPrompt
 ```
 
-### Running a REPL
-
-The simplest way to run a REPL in FRepl is to use the `stdRepl` function, which uses the System Console to display output to and read input from the user:
+The final step is to run the REPL using a runner function. FRepl defines a number of runner functions, the simplest of which is `stdRunRepl` which uses the standard console for input and output.
 
 ```F#
-    val stdRepl : EvalFunc<'TState> -> Prompt<'TState> -> 'TState -> 'TState
-```
-
-The `stdRepl` function takes as input:
-
-1. the evaluation function,
-2. the prompt function, and 
-3. the initial state.
-
-It returns the final state of the REPL upon exit.
-
-For example, the following will run a REPL using the evaluation function `simpleEvalFunc` and prompt `helloPrompt` defined above. The initial state is `()`, so the state is of type `unit`, representing a stateless REPL:
-
-```F#
-    do stdRepl simpleEvalFunc helloPrompt ()
+    // Run REPL using console for input/output
+    do stdRunRepl simpleRepl ()
 ```
 
 See the example project **SimpleRepl** for a complete example. The following shows an example session of the **SimpleRepl** application:
@@ -138,37 +101,177 @@ See the example project **SimpleRepl** for a complete example. The following sho
     Bye!!
 ```
 
-### A Stateful REPL
+### Stateful computations
 
-The example project **CountingRepl** shows an example of a REPL with state. In this example, the state is the list of inputs typed by the user since the REPL was started. It is represented by a value of type `string list`, with the most recent input at the head of the list.
+The previous section showed an example of a stateless REPL. In general, a REPL may maintain state. That is, the evaluation function may depend on - and potentially update - the current state of the REPL. Likewise the prompt may also depend on and/or update the state of the REPL.
 
-The evaluation function `countingEvalFunc` updates the state by adding the user input to the head of the list. It outputs the most recent three input lines (or up to most recent three), and exits if the input is `"quit"` or `"exit"`:
+To capture the concept of state in a purely functional manner (i.e. without introducing side-effects), FRepl defines a generic `State<>` type:
 
 ```F#
-    let countingEvalFunc state input =
-        let newState = input :: state // Prepend input text to state
-        let output = newState |> Seq.truncate 3 |> String.concat "\n" // Ouput the last three inputs
-        let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
-                || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
-        (newState,output,exit)
+	type State<'T,'TState> = State of ('TState -> 'T * 'TState)
 ```
 
-The prompt function `countingPrompt` displays the number of inputs so far as part of the prompt:
+The type arguments `'T` and `'TState` represent the underlying value type and the state type respectively. A value of type `State<'T,'TState>` is essentially a wrapper for a function which takes a `'TState` and returns a pair of a `'T` and a `'TState`.
+
+Conceptually, a value of `State<'T,'TState>` represents a *stateful computation* which can be invoked by passing in the current state (of type `'TState`). The computation evaluates a value of type `'T` (possibly dependent on the state), and potentially modifies the state.
+
+FRepl defines a number of constructs to assist with manipulating values of type `State<>`:
+
+The `addState` function "lifts" a (stateless) value into a stateful computation which returns the given value (leaving the state unchanged):
 
 ```F#
-    let countingPrompt (state : string list) = sprintf "%i> " state.Length
+    let addState x = State (fun s -> x,s)
+```
+
+The `setState` function represents a stateful computation which changes the state to a given state (and returns the value `unit`):
+
+```F#
+   let setState newState = State (fun s -> (),newState)
+```
+
+The value `getState` represents a stateful computation which retrieves the current state and returns it as the evaluated value (without modifying the state). This is useful within computation expressions (see below).
+
+```F#
+    let getState = State (fun s -> s,s)
+```
+
+The `runState` function takes a `State<'T,'TState>` value and an initial state of type `'TState` and runs the stateful computation represented by the `State<>` value using the initial state as the input. It returns a pair of the evaluated value and the updated state:
+
+```F#
+    let runState (State f) initState = f initState
+```
+
+The computation builder object `state` can be used to construct `State<>` values using F#'s [computation expression](http://msdn.microsoft.com/en-us/library/dd233182.aspx) syntax, threading the state "invisibly" through a sequence of `let!` bindings, `do!` and `return` statements:
+
+```F#
+    let myComp = state {
+        let! three = addState 3
+        let! curState = getState
+        let! list = List.replicate three curState |> addState
+        do! setState "done"
+        return list
+    }
+    let result,finalState = runState myComp "Education"
+```
+
+Evaluating the above code snippet results in:
+
+```F#
+    val result : string list = ["Education"; "Education"; "Education"]
+    val finalState : string = "done"
+```
+
+### Evaluation Functions
+
+At the heart of a REPL is an *evaluation function*. This is simply the function which transforms the input text into the output text. It may also depend on, and update the state of the REPL. The evaluation function also indicates when the REPL should exit.
+
+In FRepl, an evaluation function has the type `EvalFunc<'TState>` where `'TState` is the REPL's state type:
+
+```F#
+    type EvalFunc<'TState> = string -> State<string * bool, 'TState>
+```
+
+An `EvalFunc<'TState>` is a function which takes the input text as input and computes a pair of a `string` and a `bool` representing the output text and the exit flag respectively.
+
+Since the computation of the output may depend on, and/or update, the REPL's state, the output type is `State<string*bool,'TState>`, representing not a raw `string * bool` value, but a *stateful computation* of a `string * bool` value.
+
+A trivial example of an `EvalFunc<'TState>` is:
+
+```F#
+    let trivialEvalFunc input = ("Bonjour, monde!", true) |> addState
 ```
     
-The REPL is run using the `stdRepl` function. The initial state is the empty list `[]`, meaning that initially no inputs have been received.
+This evaluation function simply ignores the input text, outputs the text `"Bonjour, monde!"`, and indicates that the REPL should exit. The raw result `("Bonjour, monde!", true)` is transformed into a `State<string*bool,'TState>` by passing the result to the `addState` function. This has the effect of making `trivialEvalFunc` a stateful computation which always returns the same result, and leaves the state unchanged.
+
+A slightly more interesting evaluation function is given in CountingRepl.fs:
 
 ```F#
-    let finalState = stdRepl countingEvalFunc countingPrompt []
+    let countingEvalFunc input =
+        state {
+            let! curState = getState // Get the current state
+            let newState = input :: curState // Prepend input text to state
+            do! setState newState // Update the state
+            let output = newState |> Seq.truncate 3 |> String.concat "\n" // Ouput last 3 inputs
+            let exit = input.Equals("quit", StringComparison.OrdinalIgnoreCase)
+                    || input.Equals("exit", StringComparison.OrdinalIgnoreCase)
+            return (output,exit)
+        }
 ```
-    
-Note that the `stdRepl` function returns the final state of the REPL when it exits. This is then stored as the value `finalState` so that it can be accessed by the rest of the program. 
 
-The following shows an example session of the **CountingRepl** application:
+In this example, the REPL state is represented by a `string list` consisting of all the inputs the user has entered so far, with the most recent input first. The function `countingEvalFunc` uses F# [computation expression](http://msdn.microsoft.com/en-us/library/dd233182.aspx) syntax to build a `State<string*bool,string list>` from the given input string.
 
+The returned stateful computation proceeds as follows:
+1. Retrieve the current state (list of inputs) using `getState` and binding its value to `curState`.
+2. Evaluate the new state `newState` by adding `input` to the head of the list.
+3. Update the state to `newState` by using the `setState` function. The `do!` syntax but keeps track of the updated state, but ignores the output value of `setState`  (which is always the `unit` value `()` anyway).
+4. Compute the output string by concatenating the most recent three inputs.
+5. Work out whether to exit the REPL: exit if the input text was either `"quit"` or `"exit"`.
+6. "Return" the pair consisting of the output and the exit flag.
+
+### Prompts
+
+A REPL usually displays a short piece of text (the *prompt*) to the user before retrieving the input text. Since the prompt may depend on the REPL's state, FRepl represents a prompt as a *stateful computation* of the prompt string:
+
+```F#
+    type Prompt<'TState> = State<string, 'TState>
+```
+
+To define a prompt which is always the same, regardless of the state, we simply need to pass the prompt text to the `addState` function to turn it into a `Prompt<'TState>`:
+
+```F#
+    let yesPrompt = addState "Yes?> "
+```
+
+The example file CountingRepl.fs defines a prompt which depends on the REPL state, where the state is a `string list` consisting of all the inputs entered by the user so far:
+
+```F#
+    let countingPrompt : Prompt<string list> = 
+        state {
+            let! inputs = getState
+            return (sprintf "%i> " inputs.Length)
+        }
+```
+
+The prompt represented by `countingPrompt` displays the number of inputs the user has entered.
+
+### Defining and running a REPL
+
+Once the `EvalFunc<'TState>` and `Prompt<'TState>` values have been defined, they may be combined into a value of type `Repl<'TState>`:
+
+```F#
+    type Repl<'TState> = {
+            evalFunc : EvalFunc<'TState>;
+            prompt   : Prompt<'TState>
+        }
+```
+
+A `Repl<'TState>` represents a REPL as the combination of an evaluation function and a prompt, both with the state type `'TState`. The `repl` function may be used to combine an `EvalFunc<'TState>` and a `Prompt<'TState>` into a `Repl<'TState>`, as in CountingRepl.fs:
+
+```F#
+    let countingRepl = repl countingEvalFunc countingPrompt
+```
+
+Finally, to run the REPL, it must be passed to a *runner function*. The runner function is responsible for initializing the REPL, managing user input/output and the flow of execution.
+
+The simplest runner function in FRepl is `stdRunRepl`, which uses the System Console to display output to and read input from the user:
+
+```F#
+    val stdRunRepl : Repl<'TState> -> 'TState -> 'TState
+```
+
+The `stdRunRepl` function takes as input the REPL to be run, and the initial state of the REPL. It returns the final state of the REPL upon exit.
+
+For example, the following will run the REPL `countingRepl` defined above. The initial state is `[]`, representing the fact that initially, no user input has been entered:
+
+```F#
+    let finalState = stdRunRepl countingRepl []
+```
+
+The result is bound to `finalState`, which will contain a list of all the user inputs, with the most recent first.
+
+The example project **CountingRepl** shows a complete example of a REPL with state. The following shows an example session of the **CountingRepl** application:
+
+```
     Type 'exit' or 'quit' to exit
 
     0> hello
@@ -193,3 +296,4 @@ The following shows an example session of the **CountingRepl** application:
     pursued by
     a bear
     Total lines input: 5
+```
