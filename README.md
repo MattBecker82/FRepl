@@ -298,7 +298,7 @@ The example project **CountingRepl** shows a complete example of a REPL with sta
     Total lines input: 5
 ```
 
-# Customizing Input and Output
+### Customizing Input and Output
 
 The `stdRunRepl` function uses the System Console to retrieve input from the user and display output to the user. This is a common method of interfacing with the user but in certain cases, you might want to use other methods of retrieving input and handling output. For instance, you might want to use a GUI rather than the system console. Or you might want to run the REPL in a non-interactive fashion by using a predefined list of inputs, and simply gathering the outputs rather than displaying them. This could be useful for enabling automated testing of a REPL, for instance.
 
