@@ -297,3 +297,79 @@ The example project **CountingRepl** shows a complete example of a REPL with sta
     a bear
     Total lines input: 5
 ```
+
+# Customizing Input and Output
+
+The `stdRunRepl` function uses the System Console to retrieve input from the user and display output to the user. This is a common method of interfacing with the user but in certain cases, you might want to use other methods of retrieving input and handling output. For instance, you might want to use a GUI rather than the system console. Or you might want to run the REPL in a non-interactive fashion by using a predefined list of inputs, and simply gathering the outputs rather than displaying them. This could be useful for enabling automated testing of a REPL, for instance.
+
+To control how input/output is performed when running a REPL, you can use the more general `runRepl` function rather than `stdRunRepl`. The `runRepl` takes additional inputs of type `GetInput<>` and `ShowOutput<>`:
+
+```F#
+    val runRepl : GetInput<'TReplState,'TIoState> -> ShowOutput<'TReplState,'TIoState> -> Repl<'TState> -> 'TState -> 'TState
+```
+
+The full type of `GetInput<>` is:
+
+```F#
+    type GetInput<'TReplState, 'TIoState> = string -> State<string, 'TReplState * 'TIoState>
+```
+It represents a function which takes an input (the prompt string) and returns a stateful computation of the input. The state is composed of two elements: the state type `'TReplState` of the REPL, and a type `'TIoState` representing the state of the input/output mechanism. This means that retrieving the input could depend upon, and/or update both the REPL state and the state of the input/output mechanism. Both type parameters are defined by the user.
+
+The full type of `ShowOutput<>` is:
+
+```F#
+    type ShowOutput<'TReplState, 'TIoState> = string -> State<(), 'TReplState * 'TIoState>
+```
+It represents a function which takes the output string and and returns a stateful computation which displays the output. The state is composed of the same two elements as in `GetInput<>`. This means that displaying the output could depend upon, and/or update both the REPL state and the state of the input/output mechanism.
+
+The example project **CustomIoRepl** uses the same simple REPL as in the **SimpleRepl** example, but shows an example of running the REPL using customised functions for retrieving input and displaying output. In the example, the state of the input/output mechanism is represented as a pair of lists:
+
+```F#
+    type IoState = (string list)*(string list)
+```
+
+The first element of the pair represents a list of inputs not yet retrieved by the REPL. The second element of the pair represents the list of outputs so far "displayed" by the REPL.
+
+The custom `getInput` function retrieves the input by reading it from the head of the list. It updates the input/output state by setting the input list to consist of the tail of the original list:
+
+```F#
+    let getInput prompt =
+        state {
+            let! replState,ioState = getState
+            let inps,outps = ioState
+            let input,inps' =
+                match inps with
+                | x::xs -> x,xs
+                | []    -> raise (new InvalidOperationException("Inputs exhausted"))
+            let ioState' = inps',outps
+            do! setState (replState,ioState')
+            return inps.Head
+        }        
+```
+
+Note that in the case that there are no more inputs in the input list, an exception is raised.
+
+The custom `showOuput` function does not actually display anything to the user, but simply updates the input/output state by appending the output text to the output list:
+
+```F#
+    let showOutput output =
+        state {
+            let! replState,ioState = getState
+            let inps,outps = ioState
+            let outps' = outps @ [output]
+            let ioState' = inps,outps'
+            do! setState (replState,ioState')
+        }
+```
+The REPL is then run using the custom input and output functions by calling the `runRepl` function:
+
+```F#
+    // Define a list of inputs
+    let inputs = ["Hello"; "friends"; "exit"; "now"]
+    let initIoState = (inputs, [])
+    
+    // Run REPL using custom input/output methods
+    let finalState = runRepl getInput showOutput initIoState simpleRepl ()
+```
+
+The initial state is set so that the inputs list contains the list of inputs to retrieve, and the output list is empty. The `runRepl` function returns the final state as a pair, where the first element of the pair is the final state of the REPL, and the second element is the final state of the input/output mechansism. In this case, the final I/O state will be a pair consisting of two lists: the unused inputs, and the outputs "displayed" by the REPL.

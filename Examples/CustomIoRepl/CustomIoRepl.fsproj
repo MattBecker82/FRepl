@@ -5,14 +5,14 @@
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>df3db06d-b8a6-4558-9dd7-3eb248c4b130</ProjectGuid>
+    <ProjectGuid>22caec1d-a69d-474c-8356-d43e0cfa8cec</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>SimpleRepl</RootNamespace>
-    <AssemblyName>SimpleRepl</AssemblyName>
+    <RootNamespace>CustomIoRepl</RootNamespace>
+    <AssemblyName>CustomIoRepl</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <TargetFSharpCoreVersion>4.3.1.0</TargetFSharpCoreVersion>
-    <Name>SimpleRepl</Name>
+    <Name>CustomIoRepl</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>$(SolutionDir)bin\Debug\SimpleRepl.XML</DocumentationFile>
+    <DocumentationFile>$(SolutionDir)bin\Debug\CustomIoRepl.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
@@ -34,7 +34,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
     <PlatformTarget>AnyCPU</PlatformTarget>
-    <DocumentationFile>$(SolutionDir)bin\Release\SimpleRepl.XML</DocumentationFile>
+    <DocumentationFile>$(SolutionDir)bin\Release\CustomIoRepl.XML</DocumentationFile>
     <Prefer32Bit>true</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
@@ -47,7 +47,7 @@
     <Reference Include="System.Numerics" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="SimpleRepl.fs" />
+    <Compile Include="CustomIoRepl.fs" />
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>

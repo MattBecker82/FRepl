@@ -18,6 +18,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Examples", "Examples", "{4F
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CountingRepl", "Examples\CountingRepl\CountingRepl.fsproj", "{16626E2C-0454-440E-A9F5-27B11CEB1990}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "CustomIoRepl", "Examples\CustomIoRepl\CustomIoRepl.fsproj", "{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,6 +38,10 @@ Global
 		{16626E2C-0454-440E-A9F5-27B11CEB1990}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{16626E2C-0454-440E-A9F5-27B11CEB1990}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{16626E2C-0454-440E-A9F5-27B11CEB1990}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -43,5 +49,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{DF3DB06D-B8A6-4558-9DD7-3EB248C4B130} = {4F1AAD84-30C1-4DA5-B93A-E57BC291AD37}
 		{16626E2C-0454-440E-A9F5-27B11CEB1990} = {4F1AAD84-30C1-4DA5-B93A-E57BC291AD37}
+		{22CAEC1D-A69D-474C-8356-D43E0CFA8CEC} = {4F1AAD84-30C1-4DA5-B93A-E57BC291AD37}
 	EndGlobalSection
 EndGlobal
